@@ -101,279 +101,114 @@
             Mode: <span id="mode">Mouse</span>
         </div>
 
-        <script>
-        // ============================================
-        // 🎮 PARALLAX ENGINE - OPTIMIZED WITH GYRO SUPPORT
-        // ============================================
+<script>
+/* ==========================================================
+   🚀 ULTRA-LIGHT GYRO PARALLAX (DIRECTION BASED)
+   - No RAF
+   - No smoothing
+   - No continuous values
+   - CSS handles animation
+   ========================================================== */
 
-        // Cache DOM references
-        const hero = document.getElementById("hero");
-        const layers = hero.querySelectorAll("[data-depth]");
-        const gyroBtn = document.getElementById("gyroBtn");
-        
-        // Debug elements
-        const debugMousePos = document.getElementById("mousePos");
-        const debugOffset = document.getElementById("offset");
-        const debugFPS = document.getElementById("fps");
-        const debugMode = document.getElementById("mode");
+(() => {
+  "use strict";
 
-        // ============================================
-        // 📊 STATE MANAGEMENT
-        // ============================================
-        let currentX = 0;      // Current position (smoothed)
-        let targetX = 0;       // Target position
-        let raf = null;        // RequestAnimationFrame ID
-        let gyroEnabled = false;  // Gyro state
-        let gyroSupported = false; // Device capability
-        
-        // FPS tracking
-        let lastFrameTime = performance.now();
-        let fps = 60;
-        
-        // Gyro throttling
-        let lastGyroTime = 0;
-        const GYRO_THROTTLE = 16; // ~60fps (1000ms / 60 = 16.67ms)
+  /* =======================
+     DOM CACHE
+  ======================= */
+  const hero = document.getElementById("hero");
+  const layers = hero.querySelectorAll("[data-depth]");
+  const gyroBtn = document.getElementById("gyroBtn");
 
-        // ============================================
-        // ⚙️ CONFIGURATION
-        // ============================================
-        const MAX_MOVE = 80;     // Maximum pixels to move
-        const SMOOTHING = 0.08;  // Smoothing factor
-        const GYRO_SENSITIVITY = 1.5; // Gyro multiplier (adjust for intensity)
+  /* =======================
+     CONFIG
+  ======================= */
+  const MOVE_X = 80;        // Full horizontal travel in px
+  const THRESHOLD = 10;     // Gamma deadzone (degrees)
 
-        // ============================================
-        // 💾 PRESERVE ORIGINAL TRANSFORMS
-        // ============================================
-        const baseTransforms = new WeakMap();
-        
-        layers.forEach(layer => {
-            const computedStyle = getComputedStyle(layer);
-            const currentTransform = computedStyle.transform;
-            baseTransforms.set(
-                layer,
-                currentTransform === "none" ? "" : currentTransform
-            );
-            
-            // Performance optimization: hint browser about transforms
-            layer.style.willChange = 'transform';
-        });
+  /* =======================
+     STATE
+  ======================= */
+  let currentDirection = "center";
+  let gyroEnabled = false;
 
-        // ============================================
-        // 📱 DETECT MOBILE DEVICE
-        // ============================================
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-                || (window.innerWidth <= 768);
-        }
+  /* =======================
+     BASE TRANSFORMS
+  ======================= */
+  const baseTransforms = new WeakMap();
 
-        // ============================================
-        // 🎯 GYRO SUPPORT DETECTION
-        // ============================================
-        function detectGyroSupport() {
-            // Check if DeviceOrientation API exists
-            if (window.DeviceOrientationEvent) {
-                // iOS 13+ requires permission
-                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    gyroSupported = true;
-                    console.log("📱 iOS device detected - permission required");
-                } 
-                // Android and older iOS
-                else if ('ondeviceorientation' in window) {
-                    gyroSupported = true;
-                    console.log("📱 Android device detected - gyro available");
-                }
-            }
-            
-            // Show button only on mobile with gyro support
-            if (isMobile() && gyroSupported) {
-                gyroBtn.style.display = 'block';
-            }
-        }
+  layers.forEach(layer => {
+    const t = getComputedStyle(layer).transform;
+    baseTransforms.set(layer, t === "none" ? "" : t);
 
-        // ============================================
-        // 🔐 REQUEST GYRO PERMISSION (iOS 13+)
-        // ============================================
-        async function requestGyroPermission() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        console.log("✅ iOS gyro permission granted");
-                        return true;
-                    } else {
-                        console.log("❌ iOS gyro permission denied");
-                        return false;
-                    }
-                } catch (error) {
-                    console.error("❌ Error requesting gyro permission:", error);
-                    return false;
-                }
-            }
-            // Android or older iOS - no permission needed
-            return true;
-        }
+    // GPU hint
+    layer.style.willChange = "transform";
+  });
 
-        // ============================================
-        // 🎲 GYRO EVENT HANDLER (X-AXIS ONLY - OPTIMIZED)
-        // ============================================
-        function onGyroMove(event) {
-            // Throttle gyro events to prevent lag
-            const now = performance.now();
-            if (now - lastGyroTime < GYRO_THROTTLE) return;
-            lastGyroTime = now;
-            
-            // DeviceOrientation:
-            // - gamma: left-to-right tilt (-90 to 90) → X axis
-            let gamma = event.gamma; // Left-right tilt
-            
-            // Handle null values (some devices)
-            if (gamma === null) return;
+  /* =======================
+     APPLY DIRECTION
+  ======================= */
+  function applyDirection(direction) {
+    if (direction === currentDirection) return;
+    currentDirection = direction;
 
-            // Normalize gamma to -1 to 1 range
-            // gamma ranges from -90 to 90, we use -45 to 45 for better control
-            const normalizedX = Math.max(-1, Math.min(1, gamma / 45)) * GYRO_SENSITIVITY;
-            
-            // Apply maximum movement constraint (X-axis only, like mouse)
-            targetX = normalizedX * MAX_MOVE;
-            
-            // Update debug info
-            if (debugMousePos) {
-                debugMousePos.textContent = `γ:${gamma.toFixed(1)}°`;
-            }
-            
-            // Start RAF loop if not running
-            if (!raf) {
-                raf = requestAnimationFrame(update);
-            }
-        }
+    layers.forEach(layer => {
+      const depth = Number(layer.dataset.depth) || 0;
+      let x = 0;
 
-        // ============================================
-        // 🖱️ MOUSE MOVE HANDLER (X-AXIS ONLY)
-        // ============================================
-        function onMouseMove(e) {
-            // Don't process mouse if gyro is active
-            if (gyroEnabled) return;
-            
-            const normalizedX = (e.clientX / window.innerWidth) * 2 - 1;
-            targetX = normalizedX * MAX_MOVE;
-            
-            if (debugMousePos) {
-                debugMousePos.textContent = `${e.clientX}, ${e.clientY}`;
-            }
-            
-            if (!raf) {
-                raf = requestAnimationFrame(update);
-            }
-        }
+      if (direction === "left")  x = -MOVE_X * depth;
+      if (direction === "right") x =  MOVE_X * depth;
 
-        // ============================================
-        // 🎬 UPDATE LOOP (OPTIMIZED - X-AXIS ONLY)
-        // ============================================
-        function update(timestamp) {
-            // Calculate FPS
-            const delta = timestamp - lastFrameTime;
-            fps = Math.round(1000 / delta);
-            lastFrameTime = timestamp;
-            
-            if (debugFPS) {
-                debugFPS.textContent = fps;
-            }
+      layer.style.transform =
+        `translate3d(${x}px,0,0) ${baseTransforms.get(layer)}`;
+    });
+  }
 
-            // Smooth easing for X-axis only
-            currentX += (targetX - currentX) * SMOOTHING;
+  /* =======================
+     GYRO HANDLER (DIRECTION ONLY)
+  ======================= */
+  function onGyroMove(e) {
+    if (e.gamma === null) return;
 
-            // Apply transforms to all layers (batch update for performance)
-            layers.forEach(layer => {
-                const depth = Number(layer.dataset.depth);
-                const offsetX = currentX * depth;
-                
-                if (debugOffset && layer === layers[0]) {
-                    debugOffset.textContent = `${offsetX.toFixed(2)}px`;
-                }
+    if (e.gamma > THRESHOLD) {
+      applyDirection("right");
+    } else if (e.gamma < -THRESHOLD) {
+      applyDirection("left");
+    } else {
+      applyDirection("center");
+    }
+  }
 
-                // Apply transform (X-axis only, like original mouse parallax)
-                // Use will-change hint for better performance
-                layer.style.transform = 
-                    `translate3d(${offsetX}px, 0, 0) ${baseTransforms.get(layer)}`;
-            });
+  /* =======================
+     ENABLE GYRO (iOS SAFE)
+  ======================= */
+  async function enableGyro() {
+    if (gyroEnabled) return;
 
-            // Continue loop if still moving (stricter threshold for better sleep)
-            if (Math.abs(targetX - currentX) > 0.05) {
-                raf = requestAnimationFrame(update);
-            } else {
-                raf = null;
-            }
-        }
+    if (
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== "granted") return;
+    }
 
-        // ============================================
-        // 🔘 GYRO BUTTON CLICK HANDLER
-        // ============================================
-        gyroBtn.addEventListener('click', async function() {
-            if (!gyroEnabled) {
-                // Request permission if needed
-                const permitted = await requestGyroPermission();
-                
-                if (permitted) {
-                    // Enable gyro
-                    gyroEnabled = true;
-                    window.addEventListener('deviceorientation', onGyroMove, { passive: true });
-                    hero.removeEventListener('mousemove', onMouseMove);
-                    
-                    // Update button
-                    this.textContent = '🎯 Gyro Active';
-                    this.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
-                    
-                    if (debugMode) debugMode.textContent = 'Gyro';
-                    console.log("✅ Gyro parallax enabled");
-                } else {
-                    alert('Gyro permission denied. Please enable motion sensors in your browser settings.');
-                }
-            } else {
-                // Disable gyro
-                gyroEnabled = false;
-                window.removeEventListener('deviceorientation', onGyroMove);
-                hero.addEventListener('mousemove', onMouseMove);
-                
-                // Reset position smoothly
-                targetX = 0;
-                if (!raf) raf = requestAnimationFrame(update);
-                
-                // Update button
-                this.textContent = '🎯 Enable Gyro Parallax';
-                this.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                
-                if (debugMode) debugMode.textContent = 'Mouse';
-                console.log("⏸️ Gyro parallax disabled");
-            }
-        });
+    gyroEnabled = true;
+    window.addEventListener("deviceorientation", onGyroMove, {
+      passive: true
+    });
 
-        // ============================================
-        // 🚀 INITIALIZATION
-        // ============================================
-        function init() {
-            // Detect gyro support
-            detectGyroSupport();
-            
-            // Always enable mouse parallax initially (with passive listener)
-            hero.addEventListener("mousemove", onMouseMove, { passive: true });
-            
-            console.log("✅ Parallax engine initialized");
-            console.log("📊 Configuration:", { MAX_MOVE, SMOOTHING, GYRO_SENSITIVITY });
-            console.log("📱 Mobile:", isMobile());
-            console.log("🎯 Gyro supported:", gyroSupported);
-        }
+    gyroBtn.textContent = "🎯 Gyro Active";
+    gyroBtn.style.background =
+      "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)";
+  }
 
-        // Start the engine
-        init();
+  /* =======================
+     BUTTON
+  ======================= */
+  gyroBtn.addEventListener("click", enableGyro);
 
-        // ============================================
-        // 🧹 CLEANUP
-        // ============================================
-        window.addEventListener('beforeunload', () => {
-            hero.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('deviceorientation', onGyroMove);
-            if (raf) cancelAnimationFrame(raf);
-        });
-    </script>
+})();
+</script>
     </body>
 </html>
