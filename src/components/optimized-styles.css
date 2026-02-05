@@ -1,0 +1,1023 @@
+/* ============================================
+   CSS CUSTOM PROPERTIES (Variables)
+   ============================================ */
+:root {
+  /* Spritesheet coordinates */
+  --sprite-url: url("../assets/OPSpriteSheet.svg");
+
+  /* Z-index layers */
+  --z-background: 1;
+  --z-middle: 200;
+  --z-foreground: 290;
+  --z-hourglass: 900;
+  --z-hourglass-pillar: 1000;
+  --z-top: 2000;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================
+   SPRITE BASE CLASS
+   ============================================ */
+.sprite {
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  display: inline-block;
+}
+
+/* ============================================
+   LAYOUT CONTAINERS
+   ============================================ */
+.HomePage {
+  position: relative;
+  height: 300vh !important;
+  width: 100%;
+  overflow: hidden;
+}
+
+.HeroSection {
+  overflow: hidden;
+  background: linear-gradient(to bottom, #f1b5a2, #3c2a56);
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  z-index: var(--z-background);
+}
+
+.MiddleSection {
+  position: absolute;
+  height: 100vh;
+  width: 100%;
+  z-index: var(--z-middle);
+}
+
+.FutureParent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: var(--z-foreground);
+  background: linear-gradient(to bottom, #700074, #000021);
+}
+
+/* ============================================
+   HERO SECTION ELEMENTS
+   ============================================ */
+.title {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2100px;
+  height: 425px;
+  background-position: 0 0;
+  transform: translateX(-50%) scale(0.3);
+  z-index: 80;
+}
+.HeroSection [data-depth] {
+            /* 
+            🚀 will-change: transform
+            - Pre-allocates GPU layer BEFORE animation starts
+            - Tells browser "hey, this element will move!"
+            - Browser creates a compositor layer in advance
+            - CAUTION: Only use on elements that WILL animate
+            - Remove when animation completes to free memory
+            */
+            will-change: transform;
+            
+            /* 
+            🎭 backface-visibility: hidden
+            - Prevents flickering in Chrome/Safari
+            - Hides the back face of the element during 3D transforms
+            - Forces element onto its own compositor layer
+            - Fixes subpixel rendering issues
+            */
+            backface-visibility: hidden;
+            
+            /* 
+            📦 contain: layout paint style
+            - Tells browser this element is isolated
+            - "layout" = changes won't affect outside elements
+            - "paint" = painting is contained to this element
+            - "style" = style changes won't leak out
+            - Prevents expensive layout recalculations
+            - Massive performance boost for complex pages
+            */
+            contain: layout paint style;
+        }
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            border-radius: 4px;
+        }
+.baseClouds {
+  position: absolute;
+  bottom: 2%;
+  left: 50%;
+  opacity: 1;
+  width: 1525px;
+  height: 425px;
+  background-position: -2100px 0;
+  transform: translateX(-50%) scale(1.5);
+  z-index: 200;
+}
+
+.stars {
+  position: absolute;
+  top: -50%;
+  left: -25%;
+  opacity: 1;
+  width: 1952px;
+  height: 970px;
+  background-position: -2100px -425px;
+  transform: scale(1.2);
+  z-index: 80;
+}
+
+.geometricCircleGrid {
+  opacity: 0;
+}
+
+.babbageMachine {
+  position: absolute;
+  bottom: -25%;
+  left: 50%;
+  opacity: 1;
+  width: 1269px;
+  height: 739px;
+  background-position: -831px -2050px;
+  transform: translateX(-50%) scale(0.4);
+  z-index: 100;
+}
+
+.titleCloud1 {
+  position: absolute;
+  top: -30%;
+  right: 20%;
+  opacity: 1;
+  width: 470px;
+  height: 739px;
+  background-position: 0 -2050px;
+  transform: scale(0.5);
+  z-index: 80;
+}
+
+.titleCloud2 {
+  position: absolute;
+  top: -28%;
+  left: 25%;
+  opacity: 1;
+  width: 361px;
+  height: 739px;
+  z-index: 80;
+  background-position: -470px -2050px;
+  transform: scale(0.7);
+}
+
+.titleCloud3 {
+  position: absolute;
+  top: 10%;
+  left: 35%;
+  opacity: 2;
+  width: 361px;
+  height: 450px;
+  z-index: 80;
+  background-position: -470px -425px;
+  transform: scale(0.8);
+}
+
+/* ============================================
+   WINDMILL COMPONENTS
+   ============================================ */
+.WindMillParent {
+  height: 600px;
+  aspect-ratio: 1;
+  position: absolute;
+  top: 20%;
+  left: 2%;
+  transform: scale(0.8);
+  z-index: 100;
+}
+
+.staticWindMill {
+  position: absolute;
+  bottom: -40%;
+  left: 50%;
+  opacity: 1;
+  width: 699px;
+  height: 949px;
+  background-position: -831px -875px;
+  transform: translateX(-50%) scale(0.5);
+  z-index: 20;
+}
+
+.rotatingWindMill {
+  position: absolute;
+  bottom: 35%;
+  left: 50%;
+  opacity: 1;
+  width: 470px;
+  height: 450px;
+  background-position: 0 -425px;
+  transform: translateX(-50%) scale(1);
+  z-index: 10;
+  animation: windmill-rotate 12s linear infinite;
+}
+
+@keyframes windmill-rotate {
+  from {
+    transform: translateX(-50%) scaleX(-1) scale(1) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) scaleX(-1) scale(1) rotate(-360deg);
+  }
+}
+
+/* ============================================
+   WATERMILL COMPONENTS
+   ============================================ */
+.WaterMillParent {
+  height: 600px;
+  aspect-ratio: 1;
+  position: absolute;
+  top: 25%;
+  right: -2%;
+  transform: scale(0.8);
+  z-index: 100;
+}
+
+.staticWaterMill {
+  position: absolute;
+  top: -30%;
+  left: -10%;
+  opacity: 1;
+  width: 831px;
+  height: 949px;
+  background-position: 0 -875px;
+  transform: scale(0.7);
+}
+
+.rotatingWaterMill1 {
+  position: absolute;
+  top: 25%;
+  left: -20%;
+  opacity: 1;
+  width: 699px;
+  height: 450px;
+  background-position: -831px -425px;
+  transform: scale(0.95);
+  animation: watermill-rotate2 12s linear infinite;
+}
+
+@keyframes watermill-rotate2 {
+  from {
+    transform: scale(0.95) rotate(0deg);
+  }
+  to {
+    transform: scale(0.95) rotate(-360deg);
+  }
+}
+
+.rotatingWaterMill2 {
+  position: absolute;
+  top: 25%;
+  left: -2%;
+  opacity: 1;
+  width: 570px;
+  height: 450px;
+  background-position: -1530px -425px;
+  transform: scale(0.7);
+  animation: watermill-rotate 12s linear infinite;
+}
+
+@keyframes watermill-rotate {
+  from {
+    transform: scale(0.7) rotate(0deg);
+  }
+  to {
+    transform: scale(0.7) rotate(-360deg);
+  }
+}
+
+.Water {
+  position: absolute;
+  top: 7%;
+  left: -8%;
+  opacity: 5;
+  width: 340px;
+  height: 600px;
+  background-position: -3700px 0;
+  transform: translateX(-50%) scale(0.9);
+  z-index: 100;
+  animation: waterFlow 3s ease-in-out infinite;
+}
+
+@keyframes waterFlow {
+  0%, 100% {
+    transform: translateY(0) scale(1.3);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(1.5vh) scale(1.3);
+    opacity: 0.6;
+  }
+}
+
+/* ============================================
+   HOURGLASS COMPONENTS
+   ============================================ */
+.downShine,
+.upShine {
+  opacity: 0;
+}
+
+.MobileHourGlassLeftMiddle,
+.MobileHourGlassRightMiddle {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  opacity: 0;
+  width: 427px;
+  height: 711px;
+  z-index: 5000;
+}
+
+.MobileHourGlassLeftMiddle {
+  left: -50%;
+  background-position: -3625px -2789px;
+  transform: translateY(-65%);
+}
+
+.MobileHourGlassRightMiddle {
+  right: -50%;
+  background-position: -3625px -3500px;
+  transform: translateY(-62%);
+}
+
+.hourGlassLeftParent,
+.hourGlassRightParent {
+  pointer-events: none;
+  position: absolute;
+  height: 100%;
+  width: 30%;
+  top: 0;
+  opacity: 1;
+  z-index: var(--z-hourglass-pillar);
+}
+
+.hourGlassLeftParent {
+  left: 1.5%;
+}
+
+.hourGlassRightParent {
+  right: -1%;
+}
+
+.hourGlassLeftPillar {
+  position: absolute;
+  top: 50%;
+  left: -12%;
+  opacity: 1;
+  width: 470px;
+  height: 1366px;
+  z-index: var(--z-hourglass-pillar);
+  background-position: 0 -2789px;
+  transform: translateY(-50%) scale(1.8);
+}
+
+.hourGlassRightPillar {
+  position: absolute;
+  top: 50%;
+  right: -25%;
+  opacity: 1;
+  width: 470px;
+  height: 1366px;
+  z-index: var(--z-hourglass-pillar);
+  background-position: -470px -2790px;
+  transform: translateY(-50%) scale(1.8);
+}
+
+.hourGlassTopParent,
+.hourGlassBaseParent {
+    pointer-events: none;
+  position: absolute;
+  height: 100px;
+  width: 100%;
+  left: 50%;
+  opacity: 1;
+  z-index: var(--z-hourglass);
+  transform: translateX(-50%);
+}
+
+.hourGlassTopParent {
+  top: 0;
+}
+
+.hourGlassBaseParent {
+  bottom: 10%;
+}
+
+.hourGlassTop {
+  position: absolute;
+  top: -400%;
+  left: 50%;
+  opacity: 1;
+  width: 1525px;
+  height: 655px;
+  z-index: var(--z-hourglass);
+  background-position: -2100px -3501px;
+  transform: translateX(-50%) scale(1.8);
+}
+
+.hourGlassBase {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  opacity: 1;
+  width: 1525px;
+  height: 710px;
+  background-position: -2100px -2790px;
+  transform: translateX(-50%) scale(1.8);
+}
+
+/* ============================================
+   MIDDLE SECTION ELEMENTS
+   ============================================ */
+.purpleClouds1 {
+  position: absolute;
+  bottom: -55%;
+  left: 50%;
+  opacity: 1;
+  width: 1028px;
+  height: 740px;
+  z-index: 220;
+  background-position: -4052px -2050px;
+  transform: translateX(-50%) scale(2);
+}
+
+.purpleClouds2 {
+  position: absolute;
+  bottom: -30%;
+  left: 50%;
+  opacity: 1;
+  width: 1028px;
+  height: 710px;
+  z-index: 200;
+  background-position: -4052px -2798px;
+  transform: translateX(-50%) scale(1.6);
+}
+
+.girlFall {
+  position: absolute;
+  bottom: -10%;
+  left: 55%;
+  opacity: 1;
+  width: 570px;
+  height: 710px;
+  z-index: 200;
+  background-position: -1530px -2790px;
+  transform: translateX(-50%) scale(0.5);
+}
+
+.guyFall {
+  position: absolute;
+  top: 2%;
+  left: 45%;
+  opacity: 1;
+  width: 530px;
+  height: 560px;
+  z-index: 720;
+  background-position: -1530px -3501px;
+  transform: translateX(-50%) scale(0.4);
+}
+
+.peachClouds1 {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  opacity: 1;
+  width: 1029px;
+  height: 450px;
+  z-index: 720;
+  background-position: -4054px -435px;
+  transform: translate(-50%, 50%) scale(1.8);
+}
+
+.peachClouds2 {
+  position: absolute;
+  top: -35%;
+  left: 65%;
+  z-index: 710;
+  opacity: 1;
+  width: 1029px;
+  height: 429px;
+  background-position: -4052px -1395px;
+  transform: translate(-50%, 50%) scale(2);
+}
+
+/* ============================================
+   FUTURE SECTION ELEMENTS
+   ============================================ */
+.bgFutureBuild {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  opacity: 1;
+  width: 570px;
+  height: 515px;
+  z-index: 300;
+  background-position: -1530px -875px;
+  transform: translateX(-50%) scale(2);
+}
+
+.bgFutureBuild2 {
+  position: absolute;
+  bottom: 15%;
+  left: 65%;
+  opacity: 1;
+  width: 1028px;
+  height: 520px;
+  z-index: 400;
+  background-position: -4052px -875px;
+  transform: translateX(-50%) scale(1.8);
+}
+
+.foreGroundRoad {
+  position: absolute;
+  bottom: 20%;
+  left: 54%;
+  opacity: 1;
+  width: 1028px;
+  height: 425px;
+  z-index: 500;
+  background-position: -4052px 0;
+  transform: translateX(-50%) scale(1.8);
+}
+
+.BridgeAndTrainParent {
+  position: absolute;
+  bottom: 20%;
+  height: 40%;
+  width: 100%;
+  z-index: 470;
+}
+
+.train {
+  position: absolute;
+  top: 68%;
+  left: 0;
+  opacity: 1;
+  width: 1028px;
+  height: 71px;
+  z-index: 440;
+  background-position: -4052px -1853px;
+  transform: translateX(10%);
+  animation: moveTrain 6s linear infinite;
+}
+
+@keyframes moveTrain {
+  0% {
+    transform: translateX(100vw);
+  }
+  40%, 100% {
+    transform: translateX(-100vw);
+  }
+}
+
+.bridge {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  opacity: 1;
+  width: 1028px;
+  height: 126px;
+  z-index: 450;
+  background-position: -4052px -1924px;
+  transform: translateX(-50%) scale(2.5);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TABLET & MOBILE
+   ============================================ */
+
+/* Desktop Large Screens */
+@media (min-height: 880px) and (min-width: 1111px) {
+  .hourGlassLeftPillar {
+    left: 0;
+    transform: translateY(-50%) scale(2.6);
+  }
+  .hourGlassRightPillar {
+    right: -15%;
+    transform: translateY(-50%) scale(2.6);
+  }
+}
+
+/* Desktop Medium Screens */
+@media (min-height: 725px) and (min-width: 1111px) {
+  .hourGlassLeftPillar {
+    left: -8%;
+    transform: translateY(-50%) scale(2.3);
+  }
+  .hourGlassRightPillar {
+    right: -20%;
+    transform: translateY(-50%) scale(2.3);
+  }
+}
+
+/* Small Screens Base */
+@media (max-width: 477px) {
+  .titleCloud2 {
+    left: -20%;
+    top: -28%;
+    transform: scale(0.4);
+  }
+  .titleCloud3 {
+    left: 0%;
+    top: 5%;
+    transform: scale(0.4);
+  }
+  .Shine {
+    z-index: 5000 !important;
+  }
+  .upShine {
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    width: 700px;
+    height: 126px;
+    background-position: -831px -1924px;
+    z-index: 5000;
+    transform: translateX(-50%) scale(1.2);
+  }
+  .downShine {
+    position: absolute;
+    bottom: 0;
+    left: 70%;
+    width: 711px;
+    height: 126px;
+    background-position: -1530px -1924px;
+    z-index: 5000;
+    transform: translateX(-50%) scale(2);
+  }
+  .downShine,
+  .upShine {
+    opacity: 1;
+    z-index: 6000;
+  }
+  .MobileHourGlassLeftMiddle,
+  .MobileHourGlassRightMiddle {
+    opacity: 1;
+  }
+  .bgFutureBuild {
+    top: 20%;
+    left: -30%;
+    transform: translateX(-50%) scale(2.8);
+  }
+  .bgFutureBuild2 {
+    left: 115%;
+  }
+  .train {
+    top: 58%;
+  }
+  .foreGroundRoad {
+    left: 65%;
+  }
+  @keyframes moveTrain {
+    0% {
+      transform: translateX(100vw);
+    }
+    40%, 100% {
+      transform: translateX(-250vw);
+    }
+  }
+  .guyFall {
+    top: -12%;
+    transform: translateX(-50%) scale(0.25);
+  }
+  .girlFall {
+    transform: translateX(-50%) scale(0.4);
+  }
+  .hourGlassTopParent,
+  .hourGlassBaseParent {
+    transform: translateX(-50%) scale(0.3);
+  }
+  .hourGlassBaseParent {
+    bottom: 5%;
+  }
+}
+
+/* Mobile - Extra Small (max 377px) */
+@media (max-width: 377px) {
+  .titleCloud2 {
+    left: -20%;
+    top: -34%;
+    transform: scale(0.4);
+  }
+  .titleCloud3 {
+    left: 0%;
+    top: 5%;
+    transform: scale(0.4);
+  }
+  .MobileHourGlassLeftMiddle {
+    left: -65%;
+  }
+  .MobileHourGlassRightMiddle {
+    right: -65%;
+  }
+  .bgFutureBuild {
+    top: 20%;
+    left: -30%;
+    transform: translateX(-50%) scale(2.3);
+  }
+  .train {
+    top: 54%;
+  }
+  .guyFall {
+    top: -14%;
+    transform: translateX(-50%) scale(0.25);
+  }
+  .HeroSection {
+    height: 95vh;
+    z-index: 1;
+  }
+  .MiddleSection {
+    z-index: 2;
+  }
+  .title {
+    transform: translateX(-50%) scale(0.15);
+  }
+  .titleCloud1 {
+      left: 10%;
+    top: -30%;
+
+    transform: scale(0.2);
+  }
+  .babbageMachine {
+    top: 26%;
+    transform: translateX(-50%) scale(0.25) !important;
+    z-index: var(--z-top);
+  }
+  .WindMillParent {
+    top: 15%;
+    left: -60%;
+    transform: scale(0.25);
+  }
+  .WaterMillParent {
+    top: 10%;
+    right: -75%;
+    transform: scale(0.25);
+  }
+  .peachClouds1 {
+    top: -55%;
+    transform: translate(-50%, 50%) scale(0.8);
+  }
+  .peachClouds2 {
+    top: -45%;
+    left: 120%;
+    transform: translate(-50%, 50%) scale(1.6);
+  }
+  .baseClouds {
+    top: 25%;
+    left: 0%;
+    width: 700px;
+    height: 710px;
+    background-position: -830px -2790px;
+    transform: scale(1.4);
+    z-index: 1080;
+  }
+  .baseClouds2 {
+    position: absolute;
+    top: 20%;
+    right: -60%;
+    opacity: 1 !important;
+    width: 700px;
+    height: 710px;
+    background-position: -830px -3500px;
+    transform: scale(0.8);
+    z-index: 1070;
+  }
+  .hourGlassLeftParent,
+  .hourGlassRightParent {
+    opacity: 0;
+  }
+}
+
+/* Mobile - Extra Small with Short Height */
+@media (max-width: 377px) and (max-height: 590px) {
+  .babbageMachine {
+    top: 14% !important;
+    transform: translateX(-50%) scale(0.25);
+  }
+}
+
+/* Mobile - Small (377px - 767px) */
+@media (min-width: 377px) and (max-width: 767px) {
+  .HeroSection {
+    height: 95vh;
+    z-index: 1;
+  }
+  .MiddleSection {
+    z-index: 2;
+  }
+  .title {
+    transform: translateX(-50%) scale(0.18);
+  }
+  .titleCloud1 {
+    left: 10%;
+    top: -30%;
+
+    transform: scale(0.2);
+  }
+  .babbageMachine {
+    transform-origin: bottom center;
+    bottom: 14%;
+    transform: translateX(-50%) scale(0.3);
+    z-index: var(--z-top);
+  }
+  .WindMillParent {
+    top: 18%;
+    left: -50%;
+    transform: scale(0.35);
+  }
+  .WaterMillParent {
+    top: 15%;
+    right: -60%;
+    transform: scale(0.3);
+  }
+  .peachClouds1 {
+    bottom: 0;
+    transform: translate(-50%, 30%) scale(1.4);
+  }
+  .peachClouds2 {
+    top: -40%;
+    left: 120%;
+    transform: translate(-50%, 50%) scale(2);
+  }
+  .baseClouds {
+    top: 25%;
+    left: -10%;
+    width: 700px;
+    height: 710px;
+    background-position: -830px -2790px;
+    transform: scale(1);
+    z-index: 1080;
+  }
+  .baseClouds2 {
+    position: absolute;
+    top: 25%;
+    right: -60%;
+    opacity: 1 !important;
+    width: 700px;
+    height: 710px;
+    background-position: -830px -3500px;
+    transform: scale(1);
+    z-index: 1070;
+  }
+  .hourGlassLeftParent,
+  .hourGlassRightParent {
+    opacity: 0;
+  }
+}
+
+@media (min-width: 377px) and (max-width: 767px) and (min-height: 760px) {
+  .babbageMachine {
+    bottom: 16%;
+  }
+}
+
+@media (min-width: 377px) and (max-width: 767px) and (min-height: 840px) {
+  .babbageMachine {
+    bottom: 18%;
+  }
+}
+
+/* Mobile - Short Height Adjustments */
+@media (max-height: 730px) {
+  .titleCloud2 {
+    left: -20%;
+    top: -38%;
+    transform: scale(0.4);
+  }
+  .titleCloud1 {
+    top: -38%;
+  }
+  .titleCloud3 {
+    left: 0%;
+    top: 5%;
+    transform: scale(0.4);
+  }
+  .train {
+    top: 40%;
+  }
+  .WindMillParent {
+    top: 12%;
+    transform: scale(0.32);
+  }
+  .WaterMillParent {
+    top: 8%;
+    transform: scale(0.25);
+  }
+  .baseClouds,
+  .baseClouds2 {
+    top: 20%;
+  }
+  .babbageMachine {
+    top: 21%;
+    transform: translateX(-50%) scale(0.25);
+  }
+}
+
+@media (max-height: 730px) and (min-width: 377px) and (max-width: 767px) {
+  .babbageMachine {
+    top: auto;
+    bottom: 10% !important;
+  }
+}
+
+/* Desktop Large Screens (1111px+) */
+@media (min-width: 1111px) {
+  .guyFall {
+    transform: translateX(-50%) scale(0.5);
+  }
+  .girlFall {
+    bottom: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  .purpleClouds2 {
+    transform: translateX(-50%) scale(3);
+  }
+  .purpleClouds1 {
+    bottom: -40%;
+    transform: translateX(-50%) scale(3);
+  }
+  .bgFutureBuild {
+    top: 20%;
+    left: 60%;
+    transform: translateX(-50%) scale(3);
+  }
+  .bgFutureBuild2 {
+    left: 75%;
+    transform: translateX(-50%) scale(2.8);
+  }
+  .peachClouds1 {
+    left: 55%;
+    top: -35%;
+    transform: translate(-50%, 50%) scale(2.5);
+  }
+  .peachClouds2 {
+    top: -25%;
+    transform: translate(-50%, 50%) scale(2.6);
+  }
+  .WindMillParent {
+    top: 25%;
+  }
+  .WaterMillParent {
+    top: 35%;
+  }
+  .babbageMachine {
+    bottom: -9%;
+    transform: translateX(-50%) scale(0.5);
+  }
+  .train {
+    top: 58%;
+  }
+}
+
+@media (min-width: 1111px) and (min-height: 955px) {
+  .train {
+    top: 68%;
+  }
+  .babbageMachine {
+    bottom: -4%;
+    transform: translateX(-50%) scale(0.5);
+  }
+  .WindMillParent {
+    top: 30%;
+  }
+  .WaterMillParent {
+    top: 40%;
+  }
+  .titleCloud2 {
+    top: -24%;
+  }
+  .titleCloud1 {
+    top: -25%;
+  }
+}

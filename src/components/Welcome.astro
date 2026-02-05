@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Spritesheet Demo - Parallax with Gyro</title>
+        <link rel="stylesheet" href="optimized-parallax.css" />
+    </head>
+    <body>
+        <div class="HomePage">
+            <div class="HeroSection" id="hero">
+                <div class="sprite title" data-depth="0.15"></div>
+                <div class="sprite baseClouds" data-depth="0.65"></div>
+                <div class="sprite baseClouds2" data-depth="0.65"></div>
+                <div class="WindMillParent" data-depth="0.25">
+                    <div class="sprite staticWindMill"></div>
+                    <div class="sprite rotatingWindMill"></div>
+                </div>
+                <div class="WaterMillParent" data-depth="0.25">
+                    <div class="sprite rotatingWaterMill1"></div>
+                    <div class="sprite rotatingWaterMill2"></div>
+                    <div class="sprite staticWaterMill"></div>
+                    <div class="sprite Water"></div>
+                </div>
+                <div class="sprite titleCloud1" data-depth="0.5"></div>
+                <div class="sprite titleCloud2" data-depth="0.7"></div>
+                <div class="sprite titleCloud3" data-depth="0.10"></div>
+                <div class="sprite stars"></div>
+                <div class="sprite geometricCircleGrid"></div>
+                <div class="sprite babbageMachine" data-depth="0.25"></div>
+            </div>
+
+            <div class="hourGlassLeftParent">
+                <div class="sprite hourGlassLeftPillar"></div>
+            </div>
+            <div class="hourGlassRightParent">
+                <div class="sprite hourGlassRightPillar"></div>
+            </div>
+            <div class="hourGlassTopParent">
+                <div class="sprite hourGlassTop"></div>
+            </div>
+            <div class="hourGlassBaseParent">
+                <div class="sprite hourGlassBase"></div>
+            </div>
+            <div class="MiddleSection">
+                <div class="sprite MobileHourGlassLeftMiddle"></div>
+                <div class="sprite MobileHourGlassRightMiddle"></div>
+
+                <div class="sprite purpleClouds1"></div>
+                <div class="sprite purpleClouds2"></div>
+                <div class="sprite girlFall"></div>
+                <div class="sprite guyFall"></div>
+                <div class="sprite peachClouds1"></div>
+                <div class="sprite peachClouds2"></div>
+
+            </div>
+            <div class="MiddleSection Shine">
+                <div class="sprite upShine"></div>
+                <div class="sprite downShine"></div>
+            </div>
+            <div class="FutureParent">
+                <div class="sprite bgFutureBuild"></div>
+                <div class="sprite bgFutureBuild2"></div>
+                <div class="sprite foreGroundRoad"></div>
+                <div class="BridgeAndTrainParent">
+                    <div class="sprite train"></div>
+                    <div class="sprite bridge"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gyro Enable Button (only shows on mobile) -->
+        <button id="gyroBtn" style="
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        " onmouseover="this.style.transform='translateX(-50%) scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.3)'" 
+           onmouseout="this.style.transform='translateX(-50%) scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)'">
+            🎯 Enable Gyro Parallax
+        </button>
+
+        <!-- Optional: Visual debug info -->
+        <div class="debug-info" id="debug">
+            Mouse: <span id="mousePos">0, 0</span><br>
+            Offset: <span id="offset">0px</span><br>
+            FPS: <span id="fps">60</span><br>
+            Mode: <span id="mode">Mouse</span>
+        </div>
+
+        <script>
+        // ============================================
+        // 🎮 PARALLAX ENGINE - OPTIMIZED WITH GYRO SUPPORT
+        // ============================================
+
+        // Cache DOM references
+        const hero = document.getElementById("hero");
+        const layers = hero.querySelectorAll("[data-depth]");
+        const gyroBtn = document.getElementById("gyroBtn");
+        
+        // Debug elements
+        const debugMousePos = document.getElementById("mousePos");
+        const debugOffset = document.getElementById("offset");
+        const debugFPS = document.getElementById("fps");
+        const debugMode = document.getElementById("mode");
+
+        // ============================================
+        // 📊 STATE MANAGEMENT
+        // ============================================
+        let currentX = 0;      // Current position (smoothed)
+        let currentY = 0;      // Current Y position (for gyro)
+        let targetX = 0;       // Target position
+        let targetY = 0;       // Target Y position (for gyro)
+        let raf = null;        // RequestAnimationFrame ID
+        let gyroEnabled = false;  // Gyro state
+        let gyroSupported = false; // Device capability
+        
+        // FPS tracking
+        let lastFrameTime = performance.now();
+        let fps = 60;
+
+        // ============================================
+        // ⚙️ CONFIGURATION
+        // ============================================
+        const MAX_MOVE = 80;     // Maximum pixels to move
+        const SMOOTHING = 0.08;  // Smoothing factor
+        const GYRO_SENSITIVITY = 2; // Gyro multiplier (adjust for intensity)
+
+        // ============================================
+        // 💾 PRESERVE ORIGINAL TRANSFORMS
+        // ============================================
+        const baseTransforms = new WeakMap();
+        
+        layers.forEach(layer => {
+            const computedStyle = getComputedStyle(layer);
+            const currentTransform = computedStyle.transform;
+            baseTransforms.set(
+                layer,
+                currentTransform === "none" ? "" : currentTransform
+            );
+        });
+
+        // ============================================
+        // 📱 DETECT MOBILE DEVICE
+        // ============================================
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                || (window.innerWidth <= 768);
+        }
+
+        // ============================================
+        // 🎯 GYRO SUPPORT DETECTION
+        // ============================================
+        function detectGyroSupport() {
+            // Check if DeviceOrientation API exists
+            if (window.DeviceOrientationEvent) {
+                // iOS 13+ requires permission
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    gyroSupported = true;
+                    console.log("📱 iOS device detected - permission required");
+                } 
+                // Android and older iOS
+                else if ('ondeviceorientation' in window) {
+                    gyroSupported = true;
+                    console.log("📱 Android device detected - gyro available");
+                }
+            }
+            
+            // Show button only on mobile with gyro support
+            if (isMobile() && gyroSupported) {
+                gyroBtn.style.display = 'block';
+            }
+        }
+
+        // ============================================
+        // 🔐 REQUEST GYRO PERMISSION (iOS 13+)
+        // ============================================
+        async function requestGyroPermission() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        console.log("✅ iOS gyro permission granted");
+                        return true;
+                    } else {
+                        console.log("❌ iOS gyro permission denied");
+                        return false;
+                    }
+                } catch (error) {
+                    console.error("❌ Error requesting gyro permission:", error);
+                    return false;
+                }
+            }
+            // Android or older iOS - no permission needed
+            return true;
+        }
+
+        // ============================================
+        // 🎲 GYRO EVENT HANDLER
+        // ============================================
+        function onGyroMove(event) {
+            // DeviceOrientation gives us:
+            // - beta: front-to-back tilt (-180 to 180) → Y axis
+            // - gamma: left-to-right tilt (-90 to 90) → X axis
+            
+            let gamma = event.gamma; // Left-right tilt
+            let beta = event.beta;   // Front-back tilt
+
+            // Normalize gamma to -1 to 1 range
+            // gamma ranges from -90 to 90
+            const normalizedX = Math.max(-1, Math.min(1, gamma / 45)) * GYRO_SENSITIVITY;
+            
+            // Normalize beta to -1 to 1 range (optional for Y-axis parallax)
+            const normalizedY = Math.max(-1, Math.min(1, (beta - 45) / 45)) * GYRO_SENSITIVITY;
+            
+            // Apply maximum movement constraint
+            targetX = normalizedX * MAX_MOVE;
+            targetY = normalizedY * MAX_MOVE * 0.5; // Reduce Y movement
+            
+            // Update debug info
+            if (debugMousePos) {
+                debugMousePos.textContent = `γ:${gamma?.toFixed(1)}, β:${beta?.toFixed(1)}`;
+            }
+            
+            // Start RAF loop if not running
+            if (!raf) {
+                raf = requestAnimationFrame(update);
+            }
+        }
+
+        // ============================================
+        // 🖱️ MOUSE MOVE HANDLER
+        // ============================================
+        function onMouseMove(e) {
+            // Don't process mouse if gyro is active
+            if (gyroEnabled) return;
+            
+            const normalizedX = (e.clientX / window.innerWidth) * 2 - 1;
+            targetX = normalizedX * MAX_MOVE;
+            targetY = 0; // No Y movement for mouse
+            
+            if (debugMousePos) {
+                debugMousePos.textContent = `${e.clientX}, ${e.clientY}`;
+            }
+            
+            if (!raf) {
+                raf = requestAnimationFrame(update);
+            }
+        }
+
+        // ============================================
+        // 🎬 UPDATE LOOP
+        // ============================================
+        function update(timestamp) {
+            // Calculate FPS
+            const delta = timestamp - lastFrameTime;
+            fps = Math.round(1000 / delta);
+            lastFrameTime = timestamp;
+            
+            if (debugFPS) {
+                debugFPS.textContent = fps;
+            }
+
+            // Smooth easing for both X and Y
+            currentX += (targetX - currentX) * SMOOTHING;
+            currentY += (targetY - currentY) * SMOOTHING;
+
+            // Apply transforms to all layers
+            layers.forEach(layer => {
+                const depth = Number(layer.dataset.depth);
+                const offsetX = currentX * depth;
+                const offsetY = currentY * depth;
+                
+                if (debugOffset && layer === layers[0]) {
+                    debugOffset.textContent = `${offsetX.toFixed(2)}px, ${offsetY.toFixed(2)}px`;
+                }
+
+                // Apply transform with Y-axis for gyro
+                layer.style.transform = 
+                    `translate3d(${offsetX}px, ${offsetY}px, 0) ${baseTransforms.get(layer)}`;
+            });
+
+            // Continue loop if still moving
+            if (Math.abs(targetX - currentX) > 0.1 || Math.abs(targetY - currentY) > 0.1) {
+                raf = requestAnimationFrame(update);
+            } else {
+                raf = null;
+            }
+        }
+
+        // ============================================
+        // 🔘 GYRO BUTTON CLICK HANDLER
+        // ============================================
+        gyroBtn.addEventListener('click', async function() {
+            if (!gyroEnabled) {
+                // Request permission if needed
+                const permitted = await requestGyroPermission();
+                
+                if (permitted) {
+                    // Enable gyro
+                    gyroEnabled = true;
+                    window.addEventListener('deviceorientation', onGyroMove);
+                    hero.removeEventListener('mousemove', onMouseMove);
+                    
+                    // Update button
+                    this.textContent = '🎯 Gyro Active';
+                    this.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                    
+                    if (debugMode) debugMode.textContent = 'Gyro';
+                    console.log("✅ Gyro parallax enabled");
+                } else {
+                    alert('Gyro permission denied. Please enable motion sensors in your browser settings.');
+                }
+            } else {
+                // Disable gyro
+                gyroEnabled = false;
+                window.removeEventListener('deviceorientation', onGyroMove);
+                hero.addEventListener('mousemove', onMouseMove);
+                
+                // Reset position
+                targetX = 0;
+                targetY = 0;
+                if (!raf) raf = requestAnimationFrame(update);
+                
+                // Update button
+                this.textContent = '🎯 Enable Gyro Parallax';
+                this.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                
+                if (debugMode) debugMode.textContent = 'Mouse';
+                console.log("⏸️ Gyro parallax disabled");
+            }
+        });
+
+        // ============================================
+        // 🚀 INITIALIZATION
+        // ============================================
+        function init() {
+            // Detect gyro support
+            detectGyroSupport();
+            
+            // Always enable mouse parallax initially
+            hero.addEventListener("mousemove", onMouseMove);
+            
+            console.log("✅ Parallax engine initialized");
+            console.log("📊 Configuration:", { MAX_MOVE, SMOOTHING, GYRO_SENSITIVITY });
+            console.log("📱 Mobile:", isMobile());
+            console.log("🎯 Gyro supported:", gyroSupported);
+        }
+
+        // Start the engine
+        init();
+
+        // ============================================
+        // 🧹 CLEANUP
+        // ============================================
+        window.addEventListener('beforeunload', () => {
+            hero.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('deviceorientation', onGyroMove);
+            if (raf) cancelAnimationFrame(raf);
+        });
+    </script>
+    </body>
+</html>
