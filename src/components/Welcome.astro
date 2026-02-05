@@ -110,23 +110,26 @@ document.addEventListener("DOMContentLoaded", () => {
   ======================= */
   const hero = document.getElementById("hero");
   const gyroBtn = document.getElementById("gyroBtn");
-
   if (!hero || !gyroBtn) return;
 
   const layers = hero.querySelectorAll("[data-depth]");
 
   /* =======================
-     CONFIG
+     CONFIG (IMPORTANT)
   ======================= */
   const MOVE_X = 80;
-  const THRESHOLD = 10;
+
+  const ENTER_THRESHOLD = 15; // must cross this to change direction
+  const EXIT_THRESHOLD  = 6;  // must return inside this to reset
+
+  const DIRECTION_COOLDOWN = 350; // ms (prevents flicker)
 
   /* =======================
      STATE
   ======================= */
   let currentDirection = "center";
   let gyroEnabled = false;
-  let gyroSupported = false;
+  let lastDirectionChange = 0;
 
   /* =======================
      BASE TRANSFORMS
@@ -140,15 +143,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =======================
-     DEVICE CHECK
+     MOBILE + GYRO CHECK
   ======================= */
   const isMobile =
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     window.innerWidth < 768;
 
   if (window.DeviceOrientationEvent && isMobile) {
-    gyroSupported = true;
-    gyroBtn.style.display = "block"; // 🔥 FIXED
+    gyroBtn.style.display = "block";
   }
 
   /* =======================
@@ -156,6 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
   ======================= */
   function applyDirection(dir) {
     if (dir === currentDirection) return;
+
+    const now = performance.now();
+    if (now - lastDirectionChange < DIRECTION_COOLDOWN) return;
+
+    lastDirectionChange = now;
     currentDirection = dir;
 
     layers.forEach(layer => {
@@ -171,17 +178,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =======================
-     GYRO HANDLER
+     GYRO HANDLER (STABLE)
   ======================= */
   function onGyroMove(e) {
     if (e.gamma == null) return;
+    const g = e.gamma;
 
-    if (e.gamma > THRESHOLD) {
-      applyDirection("right");
-    } else if (e.gamma < -THRESHOLD) {
-      applyDirection("left");
-    } else {
-      applyDirection("center");
+    if (currentDirection === "center") {
+      if (g > ENTER_THRESHOLD) applyDirection("right");
+      else if (g < -ENTER_THRESHOLD) applyDirection("left");
+    } 
+    else if (currentDirection === "right") {
+      if (Math.abs(g) < EXIT_THRESHOLD) applyDirection("center");
+    } 
+    else if (currentDirection === "left") {
+      if (Math.abs(g) < EXIT_THRESHOLD) applyDirection("center");
     }
   }
 
@@ -191,9 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function enableGyro() {
     if (gyroEnabled) return;
 
-    if (
-      typeof DeviceOrientationEvent.requestPermission === "function"
-    ) {
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
       const res = await DeviceOrientationEvent.requestPermission();
       if (res !== "granted") return;
     }
