@@ -102,35 +102,31 @@
         </div>
 
 <script>
-/* ==========================================================
-   🚀 ULTRA-LIGHT GYRO PARALLAX (DIRECTION BASED)
-   - No RAF
-   - No smoothing
-   - No continuous values
-   - CSS handles animation
-   ========================================================== */
-
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   /* =======================
-     DOM CACHE
+     DOM
   ======================= */
   const hero = document.getElementById("hero");
-  const layers = hero.querySelectorAll("[data-depth]");
   const gyroBtn = document.getElementById("gyroBtn");
+
+  if (!hero || !gyroBtn) return;
+
+  const layers = hero.querySelectorAll("[data-depth]");
 
   /* =======================
      CONFIG
   ======================= */
-  const MOVE_X = 80;        // Full horizontal travel in px
-  const THRESHOLD = 10;     // Gamma deadzone (degrees)
+  const MOVE_X = 80;
+  const THRESHOLD = 10;
 
   /* =======================
      STATE
   ======================= */
   let currentDirection = "center";
   let gyroEnabled = false;
+  let gyroSupported = false;
 
   /* =======================
      BASE TRANSFORMS
@@ -140,24 +136,34 @@
   layers.forEach(layer => {
     const t = getComputedStyle(layer).transform;
     baseTransforms.set(layer, t === "none" ? "" : t);
-
-    // GPU hint
     layer.style.willChange = "transform";
   });
 
   /* =======================
+     DEVICE CHECK
+  ======================= */
+  const isMobile =
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    window.innerWidth < 768;
+
+  if (window.DeviceOrientationEvent && isMobile) {
+    gyroSupported = true;
+    gyroBtn.style.display = "block"; // 🔥 FIXED
+  }
+
+  /* =======================
      APPLY DIRECTION
   ======================= */
-  function applyDirection(direction) {
-    if (direction === currentDirection) return;
-    currentDirection = direction;
+  function applyDirection(dir) {
+    if (dir === currentDirection) return;
+    currentDirection = dir;
 
     layers.forEach(layer => {
       const depth = Number(layer.dataset.depth) || 0;
       let x = 0;
 
-      if (direction === "left")  x = -MOVE_X * depth;
-      if (direction === "right") x =  MOVE_X * depth;
+      if (dir === "left")  x = -MOVE_X * depth;
+      if (dir === "right") x =  MOVE_X * depth;
 
       layer.style.transform =
         `translate3d(${x}px,0,0) ${baseTransforms.get(layer)}`;
@@ -165,10 +171,10 @@
   }
 
   /* =======================
-     GYRO HANDLER (DIRECTION ONLY)
+     GYRO HANDLER
   ======================= */
   function onGyroMove(e) {
-    if (e.gamma === null) return;
+    if (e.gamma == null) return;
 
     if (e.gamma > THRESHOLD) {
       applyDirection("right");
@@ -180,17 +186,16 @@
   }
 
   /* =======================
-     ENABLE GYRO (iOS SAFE)
+     ENABLE GYRO
   ======================= */
   async function enableGyro() {
     if (gyroEnabled) return;
 
     if (
-      typeof DeviceOrientationEvent !== "undefined" &&
       typeof DeviceOrientationEvent.requestPermission === "function"
     ) {
-      const permission = await DeviceOrientationEvent.requestPermission();
-      if (permission !== "granted") return;
+      const res = await DeviceOrientationEvent.requestPermission();
+      if (res !== "granted") return;
     }
 
     gyroEnabled = true;
@@ -200,15 +205,11 @@
 
     gyroBtn.textContent = "🎯 Gyro Active";
     gyroBtn.style.background =
-      "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)";
+      "linear-gradient(135deg,#11998e,#38ef7d)";
   }
 
-  /* =======================
-     BUTTON
-  ======================= */
   gyroBtn.addEventListener("click", enableGyro);
-
-})();
+});
 </script>
     </body>
 </html>
