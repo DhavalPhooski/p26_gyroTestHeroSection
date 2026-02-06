@@ -100,7 +100,6 @@
             FPS: <span id="fps">60</span><br>
             Mode: <span id="mode">Mouse</span>
         </div>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
@@ -115,35 +114,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const layers = hero.querySelectorAll("[data-depth]");
 
   /* =======================
-     CONFIG (IMPORTANT)
+     CONFIG
   ======================= */
-  const MOVE_X = 80;
-
-  const ENTER_THRESHOLD = 15; // must cross this to change direction
-  const EXIT_THRESHOLD  = 6;  // must return inside this to reset
-
-  const DIRECTION_COOLDOWN = 350; // ms (prevents flicker)
+  const MAX_MOVE_X = 80;        // max px movement
+  const SMOOTHING = 0.07;       // lower = smoother (0.05–0.1 sweet spot)
+  const GYRO_CLAMP = 30;        // limit gamma noise
 
   /* =======================
      STATE
   ======================= */
-  let currentDirection = "center";
+  let targetX = 0;
+  let currentX = 0;
   let gyroEnabled = false;
-  let lastDirectionChange = 0;
 
   /* =======================
-     BASE TRANSFORMS
+     STORE BASE TRANSFORMS
   ======================= */
   const baseTransforms = new WeakMap();
 
   layers.forEach(layer => {
     const t = getComputedStyle(layer).transform;
     baseTransforms.set(layer, t === "none" ? "" : t);
-    (layer as HTMLElement).style.willChange = "transform";
+    layer.style.willChange = "transform";
   });
 
   /* =======================
-     MOBILE + GYRO CHECK
+     MOBILE CHECK
   ======================= */
   const isMobile =
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
@@ -154,57 +150,47 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =======================
-     APPLY DIRECTION
+     GYRO INPUT (CONTINUOUS)
   ======================= */
-  function applyDirection(dir: string) {
-    if (dir === currentDirection) return;
+  function onGyroMove(e) {
+    if (e.gamma == null) return;
 
-    const now = performance.now();
-    if (now - lastDirectionChange < DIRECTION_COOLDOWN) return;
+    // Clamp noisy values
+    const gamma = Math.max(-GYRO_CLAMP, Math.min(GYRO_CLAMP, e.gamma));
 
-    lastDirectionChange = now;
-    currentDirection = dir;
+    // Normalize to movement range
+    targetX = (gamma / GYRO_CLAMP) * MAX_MOVE_X;
+  }
+
+  /* =======================
+     SMOOTH RENDER LOOP
+  ======================= */
+  function animate() {
+    // Smooth interpolation (lerp)
+    currentX += (targetX - currentX) * SMOOTHING;
 
     layers.forEach(layer => {
-      const depth = Number((layer as HTMLElement).dataset.depth) || 0;
-      let x = 0;
+      const depth = Number(layer.dataset.depth) || 0;
+      const x = currentX * depth;
 
-      if (dir === "left")  x = -MOVE_X * depth;
-      if (dir === "right") x =  MOVE_X * depth;
-
-      (layer as HTMLElement).style.transform =
-        `translate3d(${x}px,0,0) ${baseTransforms.get(layer)}`;
+      layer.style.transform =
+        `translate3d(${x}px, 0, 0) ${baseTransforms.get(layer)}`;
     });
+
+    requestAnimationFrame(animate);
   }
 
-  /* =======================
-     GYRO HANDLER (STABLE)
-  ======================= */
-  function onGyroMove(e: DeviceOrientationEvent) {
-    if (e.gamma == null) return;
-    const g = e.gamma;
-
-    if (currentDirection === "center") {
-      if (g > ENTER_THRESHOLD) applyDirection("right");
-      else if (g < -ENTER_THRESHOLD) applyDirection("left");
-    } 
-    else if (currentDirection === "right") {
-      if (Math.abs(g) < EXIT_THRESHOLD) applyDirection("center");
-    } 
-    else if (currentDirection === "left") {
-      if (Math.abs(g) < EXIT_THRESHOLD) applyDirection("center");
-    }
-  }
+  animate();
 
   /* =======================
-     ENABLE GYRO
+     ENABLE GYRO (iOS SAFE)
   ======================= */
   async function enableGyro() {
     if (gyroEnabled) return;
 
-    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
-      const res = await (DeviceOrientationEvent as any).requestPermission();
-      if (res !== "granted") return;
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== "granted") return;
     }
 
     gyroEnabled = true;
@@ -212,8 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
       passive: true
     });
 
-    gyroBtn!.textContent = "🎯 Gyro Active";
-    gyroBtn!.style.background =
+    gyroBtn.textContent = "🎯 Gyro Active";
+    gyroBtn.style.background =
       "linear-gradient(135deg,#11998e,#38ef7d)";
   }
 
