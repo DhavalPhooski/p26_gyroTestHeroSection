@@ -866,7 +866,18 @@ body {
     background-position: -830px -2790px;
     transform: scale(1.4);
     z-index: 1080;
+    animation: basecloud2Float 4s ease-in-out infinite alternate;
   }
+
+
+@keyframes basecloud2Float {
+  0% {
+    transform: translateX(-20px) scale(1.4);
+  }
+  100% {
+    transform: translateX(20px) scale(1.4);
+  }
+}
   .baseClouds2 {
     position: absolute;
     top: 20%;
@@ -877,7 +888,23 @@ body {
     background-position: -830px -3500px;
     transform: scale(0.8);
     z-index: 1070;
+    animation: basecloudFloat 4s ease-in-out infinite alternate;
   }
+
+
+
+
+
+
+
+@keyframes basecloudFloat {
+  0% {
+    transform: translateX(-20px) scale(0.8);
+  }
+  100% {
+    transform: translateX(20px) scale(0.8);
+  }
+}
   .hourGlassLeftParent,
   .hourGlassRightParent {
     opacity: 0;
@@ -942,8 +969,22 @@ body {
     height: 710px;
     background-position: -830px -2790px;
     transform: scale(1);
-    z-index: 1080;
+    z-index: 1080;      
+    animation: basecloudFloat 4s ease-in-out infinite alternate;
   }
+
+
+
+
+
+@keyframes basecloudFloat {
+  0% {
+    transform: translateX(-20px) scale(1);
+  }
+  100% {
+    transform: translateX(20px) scale(1);
+  }
+}
   .baseClouds2 {
     position: absolute;
     top: 25%;
@@ -954,7 +995,10 @@ body {
     background-position: -830px -3500px;
     transform: scale(1);
     z-index: 1070;
+    animation: basecloudFloat 4s ease-in-out infinite alternate;
   }
+
+
   .hourGlassLeftParent,
   .hourGlassRightParent {
     opacity: 0;
