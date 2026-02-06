@@ -139,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
   layers.forEach(layer => {
     const t = getComputedStyle(layer).transform;
     baseTransforms.set(layer, t === "none" ? "" : t);
-    layer.style.willChange = "transform";
   });
 
   /* =======================
@@ -156,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =======================
      APPLY DIRECTION
   ======================= */
-  function applyDirection(dir) {
+  function applyDirection(dir: string) {
     if (dir === currentDirection) return;
 
     const now = performance.now();
@@ -166,13 +165,13 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDirection = dir;
 
     layers.forEach(layer => {
-      const depth = Number(layer.dataset.depth) || 0;
+      const depth = Number((layer as HTMLElement).dataset.depth) || 0;
       let x = 0;
 
       if (dir === "left")  x = -MOVE_X * depth;
       if (dir === "right") x =  MOVE_X * depth;
 
-      layer.style.transform =
+      (layer as HTMLElement).style.transform =
         `translate3d(${x}px,0,0) ${baseTransforms.get(layer)}`;
     });
   }
@@ -180,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =======================
      GYRO HANDLER (STABLE)
   ======================= */
-  function onGyroMove(e) {
+  function onGyroMove(e: DeviceOrientationEvent) {
     if (e.gamma == null) return;
     const g = e.gamma;
 
@@ -202,8 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function enableGyro() {
     if (gyroEnabled) return;
 
-    if (typeof DeviceOrientationEvent.requestPermission === "function") {
-      const res = await DeviceOrientationEvent.requestPermission();
+    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+      const res = await (DeviceOrientationEvent as any).requestPermission();
       if (res !== "granted") return;
     }
 
@@ -212,8 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
       passive: true
     });
 
-    gyroBtn.textContent = "🎯 Gyro Active";
-    gyroBtn.style.background =
+    gyroBtn!.textContent = "🎯 Gyro Active";
+    gyroBtn!.style.background =
       "linear-gradient(135deg,#11998e,#38ef7d)";
   }
 
