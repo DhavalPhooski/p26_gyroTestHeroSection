@@ -12,22 +12,22 @@
                 <div class="sprite title" data-depth="0.15"></div>
                 <div class="sprite baseClouds" data-depth="0.65"></div>
                 <div class="sprite baseClouds2" data-depth="0.65"></div>
-                <div class="WindMillParent" data-depth="0.25">
+                <div class="WindMillParent" >
                     <div class="sprite staticWindMill"></div>
                     <div class="sprite rotatingWindMill"></div>
                 </div>
-                <div class="WaterMillParent" data-depth="0.25">
+                <div class="WaterMillParent" >
                     <div class="sprite rotatingWaterMill1"></div>
                     <div class="sprite rotatingWaterMill2"></div>
                     <div class="sprite staticWaterMill"></div>
                     <div class="sprite Water"></div>
                 </div>
-                <div class="sprite titleCloud1" data-depth="0.5"></div>
-                <div class="sprite titleCloud2" data-depth="0.7"></div>
-                <div class="sprite titleCloud3" data-depth="0.10"></div>
+                <div class="sprite titleCloud1" ></div>
+                <div class="sprite titleCloud2" ></div>
+                <div class="sprite titleCloud3" ></div>
                 <div class="sprite stars"></div>
                 <div class="sprite geometricCircleGrid"></div>
-                <div class="sprite babbageMachine" data-depth="0.25"></div>
+                <div class="sprite babbageMachine" ></div>
             </div>
 
             <div class="hourGlassLeftParent">
@@ -139,6 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
   layers.forEach(layer => {
     const t = getComputedStyle(layer).transform;
     baseTransforms.set(layer, t === "none" ? "" : t);
+    (layer as HTMLElement).style.willChange = "transform";
   });
 
   /* =======================
