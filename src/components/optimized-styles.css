@@ -685,11 +685,28 @@ body {
     top: -28%;
     transform: scale(0.4);
   }
+  
+@keyframes cloud2Float {
+  0% {
+    transform: translateX(-20px) scale(0.4);
+  }
+  100% {
+    transform: translateX(20px) scale(0.4);
+  }
+}
   .titleCloud3 {
     left: 0%;
     top: 5%;
     transform: scale(0.4);
   }
+  @keyframes cloud3Float {
+  0% {
+    transform: translateX(-20px) scale(0.4);
+  }
+  100% {
+    transform: translateX(20px) scale(0.4);
+  }
+}
   .Shine {
     z-index: 5000 !important;
   }
@@ -806,6 +823,14 @@ body {
 
     transform: scale(0.2);
   }
+  @keyframes cloudFloat {
+  0% {
+    transform: translateX(-20px) scale(0.2);
+  }
+  100% {
+    transform: translateX(20px) scale(0.2);
+  }
+}
   @keyframes identifier {
     
   }
