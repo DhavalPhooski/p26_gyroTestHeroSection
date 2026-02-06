@@ -177,6 +177,18 @@ body {
   background-position: 0 -2050px;
   transform: scale(0.5);
   z-index: 80;
+    animation: cloudFloat 4s ease-in-out infinite alternate;
+}
+
+
+
+@keyframes cloudFloat {
+  0% {
+    transform: translateX(-20px) scale(0.5);
+  }
+  100% {
+    transform: translateX(20px) scale(0.5);
+  }
 }
 
 .titleCloud2 {
@@ -189,8 +201,21 @@ body {
   z-index: 80;
   background-position: -470px -2050px;
   transform: scale(0.7);
+      animation: cloud2Float 2s ease-in-out infinite alternate;
 }
 
+
+
+
+
+@keyframes cloud2Float {
+  0% {
+    transform: translateX(-10px) scale(0.7);
+  }
+  100% {
+    transform: translateX(30px) scale(0.7);
+  }
+}
 .titleCloud3 {
   position: absolute;
   top: 10%;
@@ -201,8 +226,16 @@ body {
   z-index: 80;
   background-position: -470px -425px;
   transform: scale(0.8);
+        animation: cloud3Float 5s ease-in-out infinite alternate;
 }
-
+@keyframes cloud3Float {
+  0% {
+    transform: translateX(-10px) scale(0.8);
+  }
+  100% {
+    transform: translateX(30px) scale(0.8);
+  }
+}
 /* ============================================
    WINDMILL COMPONENTS
    ============================================ */
@@ -772,6 +805,9 @@ body {
     top: -30%;
 
     transform: scale(0.2);
+  }
+  @keyframes identifier {
+    
   }
   .babbageMachine {
     top: 26%;
