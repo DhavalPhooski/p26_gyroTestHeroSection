@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
   layers.forEach(layer => {
     const t = getComputedStyle(layer).transform;
     baseTransforms.set(layer, t === "none" ? "" : t);
-    layer.style.willChange = "transform";
+
   });
 
   /* =======================
